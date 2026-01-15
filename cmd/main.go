@@ -15,13 +15,15 @@ import (
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	logger.Info("Starting server...")
+
 	config := config.MustLoad(logger)
+
 	r := chi.NewRouter()
-	logger.Info("Starting chi router...")
+
 	logger.Info("Setting up middleware...")
 	r.Use(middleware.RequestID)
 
-	storage, err := postgres.New(config.DbServer)
+	storage, err := postgres.New(logger, config.DbServer)
 	if err != nil {
 		logger.Error("Failed to initialize storage", "error", err)
 		return

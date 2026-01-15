@@ -3,6 +3,7 @@ package postgres
 import (
 	"database/sql"
 	"fmt"
+	"log/slog"
 	"mini-blog/internal/config"
 	"mini-blog/internal/logger/sl"
 	"time"
@@ -14,7 +15,7 @@ type Storage struct {
 	db *sql.DB
 }
 
-func New(db_config config.DBServer) (*Storage, error) {
+func New(logger *slog.Logger, db_config config.DBServer) (*Storage, error) {
 	const op = "storage.postgres.New"
 
 	connStr := getPostgresConnStr(db_config)
@@ -23,6 +24,13 @@ func New(db_config config.DBServer) (*Storage, error) {
 	if err != nil {
 		return nil, sl.Err(op, err)
 	}
+
+	err = db.Ping()
+	if err != nil {
+		logger.Error("Failed to connect to Postgres", "op", op, "error", err)
+		return nil, sl.Err(op, err)
+	}
+	logger.Info("Connected to Postgres successfully")
 
 	return &Storage{db: db}, nil
 }

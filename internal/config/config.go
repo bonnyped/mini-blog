@@ -1,8 +1,7 @@
 package config
 
 import (
-	"log"
-	"mini-blog/internal/logger/sl"
+	"log/slog"
 
 	"github.com/ilyakaznacheev/cleanenv"
 )
@@ -16,14 +15,14 @@ type HTTPServer struct {
 	Address string `yaml:"address" env-required:"true" env-default:"localhost:8080"`
 }
 
-func MustLoad() *Config {
+func MustLoad(logger *slog.Logger) *Config {
 	const op = "config.MustLoad"
 
 	var cfg Config
 
 	err := cleanenv.ReadConfig("../config/config.yaml", &cfg)
 	if err != nil {
-		log.Fatal(sl.Err(op, err))
+		logger.Error("%s %w", op, err)
 	}
 
 	return &cfg

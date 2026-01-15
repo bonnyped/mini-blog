@@ -1,0 +1,4 @@
+env: dev
+http_server:
+  address: "localhost:8088"
+db_connect: "postgres://postgres:123@localhost:5432/blog?sslmode=disable"

@@ -7,12 +7,21 @@ import (
 )
 
 type Config struct {
-	DBCOnnectionString string     `yaml:"db_connect" env-required:"true"`
-	HttpServer         HTTPServer `yaml:"http_server"`
+	DbServer   DBServer   `yaml:"db_server"`
+	HttpServer HTTPServer `yaml:"http_server"`
+}
+
+type DBServer struct {
+	Port     string `yaml:"port" env:"PORT" env-default:"5432"`
+	Host     string `yaml:"host" env:"HOST" env-default:"localhost"`
+	Name     string `yaml:"name" env-default:"postgres"`
+	User     string `yaml:"user" env-default:"postgres"`
+	Password string `yaml:"password" env:"PASSWORD" env-default:""`
 }
 
 type HTTPServer struct {
-	Address string `yaml:"address" env-required:"true" env-default:"localhost:8080"`
+	Port string `yaml:"port" env:"PORT" env-default:"8080"`
+	Host string `yaml:"host" env:"HOST" env-default:"localhost"`
 }
 
 func MustLoad(logger *slog.Logger) *Config {
@@ -24,6 +33,8 @@ func MustLoad(logger *slog.Logger) *Config {
 	if err != nil {
 		logger.Error("%s %w", op, err)
 	}
+
+	logger.Info("Configuration loaded", slog.Any("config", cfg))
 
 	return &cfg
 }

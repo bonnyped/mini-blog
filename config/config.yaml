@@ -1,4 +1,10 @@
 env: dev
+db_server:
+  port: "5432"
+  host: "localhost"
+  name: "blog"
+  user: "postgres"
+  password: "123"
 http_server:
-  address: "localhost:8088"
-db_connect: "postgres://postgres:123@localhost:5432/blog?sslmode=disable"
+  port: "8088"
+  host: "localhost"

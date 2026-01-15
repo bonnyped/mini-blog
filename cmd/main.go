@@ -16,14 +16,12 @@ func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	logger.Info("Starting server...")
 	config := config.MustLoad(logger)
-	logger.Info("Config loaded successfully...")
 	r := chi.NewRouter()
 	logger.Info("Starting chi router...")
 	logger.Info("Setting up middleware...")
 	r.Use(middleware.RequestID)
-	//TODO: настроить конфиг для всех переменных
 
-	storage, err := postgres.New(config.DBCOnnectionString)
+	storage, err := postgres.New(config.DbServer)
 	if err != nil {
 		logger.Error("Failed to initialize storage", "error", err)
 		return

@@ -4,13 +4,12 @@ import (
 	"log/slog"
 	"mini-blog/internal/models/domain"
 	"net/http"
-	"time"
 
 	"github.com/go-chi/chi/middleware"
 )
 
 type CreateUser interface {
-	CreateUser(username string, creationTime time.Time) error
+	CreateUser(username string) error
 }
 
 func New(logger *slog.Logger, userCreator CreateUser) http.HandlerFunc {
@@ -28,7 +27,7 @@ func New(logger *slog.Logger, userCreator CreateUser) http.HandlerFunc {
 			return
 		}
 
-		err := userCreator.CreateUser(user.Username, time.Now())
+		err := userCreator.CreateUser(user.Username)
 		if err != nil {
 			logger.Error("failed to create user", slog.String("error", err.Error()))
 			http.Error(w, "failed to create user", http.StatusInternalServerError)

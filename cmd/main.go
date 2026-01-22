@@ -3,6 +3,7 @@ package main
 import (
 	"log/slog"
 	"mini-blog/internal/config"
+	createnote "mini-blog/internal/handlers/create_note"
 	createuser "mini-blog/internal/handlers/create_user"
 	"mini-blog/storage/postgres"
 	"net/http"
@@ -22,6 +23,7 @@ func main() {
 
 	logger.Info("Setting up middleware...")
 	r.Use(middleware.RequestID)
+	r.Use(middleware.URLFormat)
 
 	storage, err := postgres.New(logger, config.DbServer)
 	if err != nil {
@@ -30,10 +32,7 @@ func main() {
 	}
 
 	r.Post("/users", createuser.New(logger, storage))
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		logger.Info("Received request", "method", r.Method, "path", r.URL.Path)
-		w.Write([]byte("Hello, gopher!"))
-	})
+	r.Post("/users/{id}/notes", createnote.New(logger, storage))
 
 	logger.Info("Listening on 127.0.0.1:8082")
 

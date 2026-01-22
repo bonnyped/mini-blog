@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"mini-blog/internal/config"
 	"mini-blog/internal/logger/sl"
-	"time"
+	"mini-blog/internal/models/domain"
 
 	_ "github.com/lib/pq"
 )
@@ -40,18 +40,34 @@ func getPostgresConnStr(db_config config.DBServer) string {
 		db_config.Host, db_config.Port, db_config.User, db_config.Password, db_config.Name)
 }
 
-func (s *Storage) CreateUser(username string, creationTime time.Time) error {
+func (s *Storage) CreateUser(username string) error {
 	const op = "storage.postgres.CreateUser"
 
-	stmt, err := s.db.Prepare("INSERT INTO users(username, created_at) VALUES($1, $2)")
+	stmt, err := s.db.Prepare("INSERT INTO users(username) VALUES($1)")
 	if err != nil {
 		return sl.Err(op, err)
 	}
 
 	defer stmt.Close()
 
-	_, err = stmt.Exec(username, creationTime)
+	_, err = stmt.Exec(username)
 
+	if err != nil {
+		return sl.Err(op, err)
+	}
+
+	return nil
+}
+
+func (s *Storage) CreateNote(userId uint64, note domain.Note) error {
+	const op = "storage.posgtres.CreateNote"
+
+	stmt, err := s.db.Prepare("INSERT INTO notes(user_id, title, content) VALUES($1, $2, $3)")
+	if err != nil {
+		return sl.Err(op, err)
+	}
+
+	_, err = stmt.Exec(userId, note.Title, note.Content)
 	if err != nil {
 		return sl.Err(op, err)
 	}

@@ -9,6 +9,7 @@ import (
 type Config struct {
 	DbServer   DBServer   `yaml:"db_server"`
 	HttpServer HTTPServer `yaml:"http_server"`
+	JWTSecret  string     `env:"JWT_SECRET" env-default:"topsecret"`
 }
 
 type DBServer struct {

@@ -9,10 +9,10 @@ import (
 )
 
 type CreateUser interface {
-	CreateUser(username string) error
+	CreateUser(logger slog.Logger, username string, secret string) error
 }
 
-func New(logger *slog.Logger, userCreator CreateUser) http.HandlerFunc {
+func New(logger *slog.Logger, userCreator CreateUser, secret string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handlers.create_user.New"
 
@@ -27,7 +27,7 @@ func New(logger *slog.Logger, userCreator CreateUser) http.HandlerFunc {
 			return
 		}
 
-		err := userCreator.CreateUser(user.Username)
+		err := userCreator.CreateUser(*logger, user.Username, secret)
 		if err != nil {
 			logger.Error("failed to create user", slog.String("error", err.Error()))
 			http.Error(w, "failed to create user", http.StatusInternalServerError)

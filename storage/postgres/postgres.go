@@ -7,6 +7,10 @@ import (
 	"mini-blog/internal/config"
 	"mini-blog/internal/logger/sl"
 	"mini-blog/internal/models/domain"
+	"strconv"
+	"time"
+
+	"github.com/golang-jwt/jwt/v5"
 
 	_ "github.com/lib/pq"
 )
@@ -40,23 +44,43 @@ func getPostgresConnStr(db_config config.DBServer) string {
 		db_config.Host, db_config.Port, db_config.User, db_config.Password, db_config.Name)
 }
 
-func (s *Storage) CreateUser(username string) error {
+func (s *Storage) CreateUser(logger slog.Logger, username string, secret string) error {
 	const op = "storage.postgres.CreateUser"
+	var id int64
 
-	stmt, err := s.db.Prepare("INSERT INTO users(username) VALUES($1)")
+	err := s.db.QueryRow("INSERT INTO users(username) VALUES($1) RETURNING id", username).Scan(&id)
 	if err != nil {
+		logger.Error("NEED TO DISCRIBE")
 		return sl.Err(op, err)
 	}
 
-	defer stmt.Close()
-
-	_, err = stmt.Exec(username)
-
+	resJWT, err := generateToken(id, secret)
 	if err != nil {
+		logger.Error("NEED TO DISCRIBE4")
 		return sl.Err(op, err)
 	}
+
+	logger.Info("Generated JWT token")
+	logger.Info("JWT: ", "token", resJWT)
 
 	return nil
+}
+
+func generateToken(id int64, secret string) (string, error) {
+	key := []byte(secret)
+	claims := jwt.RegisteredClaims{
+		Subject:   strconv.FormatInt(id, 10),
+		ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24)),
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	resJWT, err := token.SignedString(key)
+	if err != nil {
+		return "", err
+	}
+
+	return resJWT, nil
 }
 
 func (s *Storage) CreateNote(userId uint64, note domain.Note) error {

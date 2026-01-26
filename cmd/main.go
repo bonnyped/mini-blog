@@ -31,7 +31,7 @@ func main() {
 		return
 	}
 
-	r.Post("/users", createuser.New(logger, storage))
+	r.Post("/users", createuser.New(logger, storage, config.JWTSecret))
 	r.Post("/users/{id}/notes", createnote.New(logger, storage))
 
 	logger.Info("Listening on 127.0.0.1:8082")

@@ -1,0 +1,62 @@
+[
+    {
+    "user_id": 2,
+    "note_title": "1ая заметка",
+    "note_content": "Зачем? Чтобы было! Ну или: за шкафом!"
+    },
+    {
+    "user_id": 1,
+    "note_title": "Первая заметка",
+    "note_content": "Практически самая важная"
+    },
+    {
+    "user_id": 1,
+    "note_title": "Вторая заметка",
+    "note_content": "Не такая важная, но тож ничего"
+    },
+    {
+    "user_id": 1,
+    "note_title": "Третья заметка",
+    "note_content": "Привык"
+    },
+    {
+    "user_id": 1,
+    "note_title": "Четвертая заметка",
+    "note_content": "Развиваю мысль"
+    },
+    {
+    "user_id": 1,
+    "note_title": "Пятая заметка",
+    "note_content": "Профи"
+    },
+    {
+    "user_id": 1,
+    "note_title": "Шестая заметка",
+    "note_content": "Так держать и развивать"
+    },
+    {
+    "user_id": 1,
+    "note_title": "Седьмая заметка",
+    "note_content": "Уже молодэст"
+    },
+    {
+    "user_id": 1,
+    "note_title": "Восьмая заметка",
+    "note_content": "Осталось совсем чуть-чуть"
+    },
+    {
+    "user_id": 1,
+    "note_title": "Девятая заметка",
+    "note_content": "На ниточке..."
+    },
+    {
+    "user_id": 1,
+    "note_title": "Десятая заметка",
+    "note_content": "На сопельке..."
+    },
+    {
+    "user_id": 1,
+    "note_title": "Одиннадцатая заметка",
+    "note_content": "То, что нужно, точь-в-точь!"
+    }
+]

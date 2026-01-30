@@ -3,14 +3,18 @@ package main
 import (
 	"log/slog"
 	"mini-blog/internal/config"
-	createnote "mini-blog/internal/handlers/create_note"
-	createuser "mini-blog/internal/handlers/create_user"
+	newNote "mini-blog/internal/handlers/create_note"
+	newUser "mini-blog/internal/handlers/create_user"
+	getaccesstoken "mini-blog/internal/handlers/get_access_token"
+	userNotes "mini-blog/internal/handlers/get_user_notes"
+	"mini-blog/pkg/sl"
 	"mini-blog/storage/postgres"
 	"net/http"
 	"os"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/jwtauth/v5"
 )
 
 func main() {
@@ -19,31 +23,32 @@ func main() {
 
 	config := config.MustLoad(logger)
 
-	r := chi.NewRouter()
+	router := chi.NewRouter()
 
 	logger.Info("Setting up middleware...")
-	r.Use(middleware.RequestID)
-	r.Use(middleware.URLFormat)
 
-	storage, err := postgres.New(logger, config.DbServer)
+	storage, err := postgres.New(config.DbServer)
 	if err != nil {
-		logger.Error("Failed to initialize storage", "error", err)
+		logger.Error("Failed to initialize storage", sl.Attr(err))
 		return
 	}
+	router.Use(middleware.RequestID)
+	router.Use(middleware.URLFormat)
 
-	r.Post("/users", createuser.New(logger, storage, config.JWTSecret))
-	r.Post("/users/{id}/notes", createnote.New(logger, storage))
+	router.Group(func(r chi.Router) {
+		r.Use(jwtauth.Verifier(config.JWTManager.JWTAuth))
+		r.Use(jwtauth.Authenticator(config.JWTManager.JWTAuth))
+		r.Post("/users/{id}/notes", newNote.New(logger, storage))
+		r.Get("/users/{id}/notes", userNotes.New(logger, storage))
+	})
+
+	router.Post("/users", newUser.New(logger, storage, config.JWTManager))
+	router.Get("/users/{id}", getaccesstoken.New(logger, *storage, config.JWTManager))
 
 	logger.Info("Listening on 127.0.0.1:8082")
 
-	err = http.ListenAndServe("127.0.0.1:8082", r)
+	err = http.ListenAndServe("127.0.0.1:8082", router)
 	if err != nil {
-		logger.Error("Server failed to start", "error", err)
+		logger.Error("Server failed to start", sl.Attr(err))
 	}
-	//TODO: config implementation
-
-	//TODO: storage implementation
-
-	//TODO: logger implementation
-
 }

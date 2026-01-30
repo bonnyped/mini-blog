@@ -3,14 +3,10 @@ package postgres
 import (
 	"database/sql"
 	"fmt"
-	"log/slog"
 	"mini-blog/internal/config"
-	"mini-blog/internal/logger/sl"
-	"mini-blog/internal/models/domain"
-	"strconv"
-	"time"
-
-	"github.com/golang-jwt/jwt/v5"
+	req "mini-blog/internal/models/domain/request_DTO"
+	resp "mini-blog/internal/models/domain/responce_DTO"
+	"mini-blog/pkg/sl"
 
 	_ "github.com/lib/pq"
 )
@@ -19,7 +15,11 @@ type Storage struct {
 	db *sql.DB
 }
 
-func New(logger *slog.Logger, db_config config.DBServer) (*Storage, error) {
+type AccessToken struct {
+	Token string `json:"access_token"`
+}
+
+func New(db_config config.DBServer) (*Storage, error) {
 	const op = "storage.postgres.New"
 
 	connStr := getPostgresConnStr(db_config)
@@ -31,10 +31,8 @@ func New(logger *slog.Logger, db_config config.DBServer) (*Storage, error) {
 
 	err = db.Ping()
 	if err != nil {
-		logger.Error("Failed to connect to Postgres", "op", op, "error", err)
 		return nil, sl.Err(op, err)
 	}
-	logger.Info("Connected to Postgres successfully")
 
 	return &Storage{db: db}, nil
 }
@@ -44,46 +42,21 @@ func getPostgresConnStr(db_config config.DBServer) string {
 		db_config.Host, db_config.Port, db_config.User, db_config.Password, db_config.Name)
 }
 
-func (s *Storage) CreateUser(logger slog.Logger, username string, secret string) error {
+func (s *Storage) CreateUser(username string) (int, error) {
 	const op = "storage.postgres.CreateUser"
-	var id int64
+	var id int
 
-	err := s.db.QueryRow("INSERT INTO users(username) VALUES($1) RETURNING id", username).Scan(&id)
+	err := s.db.QueryRow(`INSERT INTO users(username) 
+						VALUES($1) RETURNING user_id`,
+		username).Scan(&id)
 	if err != nil {
-		logger.Error("NEED TO DISCRIBE")
-		return sl.Err(op, err)
+		return -1, sl.Err(op, err)
 	}
 
-	resJWT, err := generateToken(id, secret)
-	if err != nil {
-		logger.Error("NEED TO DISCRIBE4")
-		return sl.Err(op, err)
-	}
-
-	logger.Info("Generated JWT token")
-	logger.Info("JWT: ", "token", resJWT)
-
-	return nil
+	return id, nil
 }
 
-func generateToken(id int64, secret string) (string, error) {
-	key := []byte(secret)
-	claims := jwt.RegisteredClaims{
-		Subject:   strconv.FormatInt(id, 10),
-		ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24)),
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	resJWT, err := token.SignedString(key)
-	if err != nil {
-		return "", err
-	}
-
-	return resJWT, nil
-}
-
-func (s *Storage) CreateNote(userId uint64, note domain.Note) error {
+func (s *Storage) CreateNote(userId uint64, note req.Note) error {
 	const op = "storage.posgtres.CreateNote"
 
 	stmt, err := s.db.Prepare("INSERT INTO notes(user_id, title, content) VALUES($1, $2, $3)")
@@ -94,6 +67,59 @@ func (s *Storage) CreateNote(userId uint64, note domain.Note) error {
 	_, err = stmt.Exec(userId, note.Title, note.Content)
 	if err != nil {
 		return sl.Err(op, err)
+	}
+
+	return nil
+}
+
+func (s *Storage) GetUserNotes(userID int) ([]resp.UserNote, error) {
+	const op = "storage.postgres.GetUserNotes"
+	var (
+		allNotes []resp.UserNote
+	)
+
+	rows, err := s.db.Query(`SELECT note_id,
+									user_id, 
+									title, 
+									content, 
+									createdAt, 
+									updatedAt 
+							FROM notes 
+							WHERE user_id=$1`, userID)
+	if err != nil {
+		return nil, sl.Err(op, err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var note resp.UserNote
+		err = rows.Scan(&note.NoteID,
+			&note.UserID,
+			&note.Title,
+			&note.Content,
+			&note.CreatedAt,
+			&note.UpdatedAt)
+		if err != nil {
+			return nil, sl.Err(op, err)
+		}
+		allNotes = append(allNotes, note)
+	}
+
+	return allNotes, nil
+}
+
+func (s *Storage) UserExists(userID int) error {
+	const op = "storage.postgres.UserExists"
+
+	var recievedID int
+
+	row := s.db.QueryRow(`SELECT user_id
+					FROM users
+					WHERE user_id=?`, userID)
+
+	err := row.Scan(&recievedID)
+	if err == sql.ErrNoRows {
+		return sl.Err(op, fmt.Errorf("user with id: %d not found", userID))
 	}
 
 	return nil

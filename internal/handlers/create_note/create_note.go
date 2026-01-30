@@ -2,7 +2,8 @@ package createnote
 
 import (
 	"log/slog"
-	"mini-blog/internal/models/domain"
+	domain "mini-blog/internal/models/domain/request_DTO"
+	"mini-blog/pkg/sl"
 	"net/http"
 	"strconv"
 
@@ -27,17 +28,19 @@ func New(logger *slog.Logger, noteCreator CreateNote) http.HandlerFunc {
 		userId, err := strconv.Atoi((chi.URLParam(r, "id")))
 		if err != nil {
 			logger.Error(op, "error", "incorrect user_id")
+			return
 		}
 
 		err = render.DecodeJSON(r.Body, &note)
 		if err != nil {
-			logger.Error(op, "error", err.Error())
+			logger.Error(op, sl.Attr(err))
+			return
 		}
 
 		err = noteCreator.CreateNote(uint64(userId), note)
 		if err != nil {
-			logger.Error("failed to create note", slog.String("error", err.Error()))
+			logger.Error("failed to create note", sl.Attr(err))
+			return
 		}
 	}
-
 }

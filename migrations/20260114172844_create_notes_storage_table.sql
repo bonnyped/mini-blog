@@ -1,6 +1,6 @@
 -- +goose Up
 CREATE TABLE IF NOT EXISTS notes (
-    id SERIAL PRIMARY KEY,
+    note_id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
     title VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS notes (
 
     CONSTRAINT fk_user_id
         FOREIGN KEY(user_id)
-        REFERENCES users(id)
+        REFERENCES users(user_id)
 );
 -- +goose StatementBegin
 -- +goose StatementEnd

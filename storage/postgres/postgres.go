@@ -82,8 +82,8 @@ func (s *Storage) GetUserNotes(userID int) ([]resp.UserNote, error) {
 									user_id, 
 									title, 
 									content, 
-									createdAt, 
-									updatedAt 
+									created_at, 
+									updated_at 
 							FROM notes 
 							WHERE user_id=$1`, userID)
 	if err != nil {

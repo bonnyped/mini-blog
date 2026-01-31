@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log/slog"
 	"mini-blog/pkg/sl"
+	"strconv"
 
 	"github.com/go-chi/jwtauth/v5"
 )
@@ -16,19 +17,20 @@ type AccessToken struct {
 	JWTToken string `json:"access_token"`
 }
 
-func (jwt JWTManager) getAccessToken(userID int) (string, error, string) {
+func (jm JWTManager) getAccessToken(userID int) (string, string, error) {
 	const op = "internal.auth.getAccessToken"
-	claims := map[string]any{"user_id": userID}
 
-	_, accessToken, err := jwt.Encode(claims)
+	claims := map[string]any{"user_id": strconv.Itoa(userID)}
 
-	return accessToken, err, op
+	_, accessToken, err := jm.Encode(claims)
+
+	return accessToken, op, err
 }
 
-func (jwt JWTManager) GetMarshaledToken(logger *slog.Logger, userID int) ([]byte, error) {
+func (jm JWTManager) GetMarshaledToken(logger *slog.Logger, userID int) ([]byte, error) {
 	const op = "internal.auth.GetMarshaledToken"
 
-	accessToken, err, cause := jwt.getAccessToken(userID)
+	accessToken, cause, err := jm.getAccessToken(userID)
 	if err != nil {
 		return nil, sl.Err(cause, err)
 	}

@@ -1,6 +1,7 @@
 package getusernotes
 
 import (
+	"encoding/json"
 	"log/slog"
 	resp "mini-blog/internal/models/domain/responce_DTO"
 	"mini-blog/pkg/sl"
@@ -9,8 +10,6 @@ import (
 
 	"github.com/go-chi/chi"
 )
-
-var notes []resp.UserNote
 
 type AllUserNotesHandler interface {
 	GetUserNotes(userID int) ([]resp.UserNote, error)
@@ -27,15 +26,23 @@ func New(logger *slog.Logger, storage AllUserNotesHandler) http.HandlerFunc {
 			return
 		}
 
-		notes, err = storage.GetUserNotes(userID)
+		notes, err := storage.GetUserNotes(userID)
 		if err != nil {
 			logger.Info("add a description") // TODO
 			logger.Error(op, sl.Attr(err))
 			return
 		}
-		_ = notes
 
-		w.Header().Set("status", "200 - OK")
+		marshaled, err := json.Marshal(notes)
+		if err != nil {
+			logger.Info("internal server error")
+			logger.Error(op, sl.Attr(err))
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		w.Write(marshaled)
 		//преобразовать массив структур в JSON, как?
 
 	}

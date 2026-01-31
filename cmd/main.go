@@ -7,6 +7,7 @@ import (
 	newUser "mini-blog/internal/handlers/create_user"
 	getaccesstoken "mini-blog/internal/handlers/get_access_token"
 	userNotes "mini-blog/internal/handlers/get_user_notes"
+	mymiddleware "mini-blog/internal/my_middleware"
 	"mini-blog/pkg/sl"
 	"mini-blog/storage/postgres"
 	"net/http"
@@ -38,6 +39,7 @@ func main() {
 	router.Group(func(r chi.Router) {
 		r.Use(jwtauth.Verifier(config.JWTManager.JWTAuth))
 		r.Use(jwtauth.Authenticator(config.JWTManager.JWTAuth))
+		r.Use(mymiddleware.Authorize)
 		r.Post("/users/{id}/notes", newNote.New(logger, storage))
 		r.Get("/users/{id}/notes", userNotes.New(logger, storage))
 	})
